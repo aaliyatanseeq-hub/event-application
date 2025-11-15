@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Intelligence Platform</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Event Intelligence</span>
+            </div>
+            <div class="nav-links">
+                <a href="#phase1" class="nav-link active">Events</a>
+                <a href="#phase2" class="nav-link">Attendees</a>
+                <a href="#phase3" class="nav-link">Notifications</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <h1>Event Intelligence Platform</h1>
+            <p>Discover Events • Analyze Attendees • Send Notifications</p>
+            <div class="status-badge" id="apiStatus">
+                <i class="fas fa-check-circle"></i>
+                System Ready
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Phase 1: Events -->
+        <section id="phase1" class="phase-section active">
+            <div class="phase-header">
+                <h2>Event Discovery</h2>
+                <p>Find events in any location</p>
+            </div>
+            
+            <div class="input-card">
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="location"><i class="fas fa-map-marker-alt"></i> Location</label>
+                        <input type="text" id="location" placeholder="Enter city or country" value="New York">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="startDate"><i class="fas fa-calendar"></i> From Date</label>
+                        <input type="date" id="startDate">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="endDate"><i class="fas fa-calendar"></i> To Date</label>
+                        <input type="date" id="endDate">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="maxEvents"><i class="fas fa-chart-line"></i> Max Events</label>
+                        <input type="number" id="maxEvents" min="1" max="100" value="10">
+                    </div>
+                </div>
+
+                <div class="categories-section">
+                    <label><i class="fas fa-tags"></i> Event Categories</label>
+                    <div class="categories-grid">
+                        <label class="category-checkbox">
+                            <input type="checkbox" value="music" checked>
+                            <span class="checkmark">Music</span>
+                        </label>
+                        <label class="category-checkbox">
+                            <input type="checkbox" value="sports" checked>
+                            <span class="checkmark">Sports</span>
+                        </label>
+                        <label class="category-checkbox">
+                            <input type="checkbox" value="food" checked>
+                            <span class="checkmark">Food</span>
+                        </label>
+                        <label class="category-checkbox">
+                            <input type="checkbox" value="arts" checked>
+                            <span class="checkmark">Arts</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="discoverEvents()">
+                    <i class="fas fa-search"></i>
+                    Discover Events
+                </button>
+            </div>
+
+            <div id="eventsResults" class="results-section hidden">
+                <div class="results-header">
+                    <h3>Discovered Events</h3>
+                    <div class="results-stats" id="eventsStats"></div>
+                </div>
+                
+                <div class="table-container">
+                    <table id="eventsTable">
+                        <thead>
+                            <tr>
+                                <th>Event Name</th>
+                                <th>Date</th>
+                                <th>Venue</th>
+                                <th>Category</th>
+                                <th>Confidence</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Phase 2: Attendees -->
+        <section id="phase2" class="phase-section">
+            <div class="phase-header">
+                <h2>Attendee Discovery</h2>
+                <p>Find users discussing events</p>
+            </div>
+            
+            <div class="input-card">
+                <div class="input-group">
+                    <label for="eventSelect"><i class="fas fa-calendar-check"></i> Select Event</label>
+                    <select id="eventSelect">
+                        <option value="">-- Select from events --</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="manualEvent"><i class="fas fa-edit"></i> Or Enter Event</label>
+                    <input type="text" id="manualEvent" placeholder="Enter event name">
+                </div>
+                
+                <div class="input-group">
+                    <label for="eventDate"><i class="fas fa-calendar-day"></i> Event Date (Optional)</label>
+                    <input type="text" id="eventDate" placeholder="2024 or 2024-12-25">
+                </div>
+                
+                <div class="input-group">
+                    <label for="maxAttendees"><i class="fas fa-users"></i> Max Attendees</label>
+                    <input type="number" id="maxAttendees" min="1" max="100" value="10">
+                </div>
+
+                <button class="btn-primary" onclick="discoverAttendees()">
+                    <i class="fas fa-users"></i>
+                    Find Attendees
+                </button>
+            </div>
+
+            <div id="attendeesResults" class="results-section hidden">
+                <div class="results-header">
+                    <h3>Event Attendees</h3>
+                    <div class="results-stats" id="attendeesStats"></div>
+                </div>
+                
+                <div class="table-container">
+                    <table id="attendeesTable">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAllAttendees" onchange="toggleSelectAll()">
+                                    Select
+                                </th>
+                                <th>Username</th>
+                                <th>Engagement</th>
+                                <th>Post Content</th>
+                                <th>Post Date</th>
+                                <th>Followers</th>
+                                <th>Confidence</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendeesTableBody"></tbody>
+                    </table>
+                </div>
+                
+                <div class="selection-actions hidden" id="selectionActions">
+                    <button class="btn-primary" onclick="sendToNotifications()">
+                        <i class="fas fa-paper-plane"></i>
+                        Send Selected to Notifications
+                    </button>
+                    <span id="selectedCount">0 users selected</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Phase 3: Notifications -->
+        <section id="phase3" class="phase-section">
+            <div class="phase-header">
+                <h2>Notification Center</h2>
+                <p>Send messages to selected users</p>
+            </div>
+            
+            <div class="input-card">
+                <div class="input-group">
+                    <label for="notificationMessage"><i class="fas fa-envelope"></i> Message</label>
+                    <textarea id="notificationMessage" rows="6" placeholder="Enter your message here..."></textarea>
+                </div>
+                
+                <div class="input-group">
+                    <label for="messageType"><i class="fas fa-tag"></i> Message Type</label>
+                    <select id="messageType">
+                        <option value="event_update">Event Update</option>
+                        <option value="reminder">Reminder</option>
+                        <option value="special_offer">Special Offer</option>
+                        <option value="general">General Message</option>
+                    </select>
+                </div>
+
+                <button class="btn-primary" onclick="sendNotifications()">
+                    <i class="fas fa-paper-plane"></i>
+                    Send Notifications
+                </button>
+            </div>
+
+            <div class="results-section">
+                <div class="results-header">
+                    <h3>Selected Users</h3>
+                    <div class="results-stats" id="notificationStats">
+                        <span id="totalSelected">0 users selected</span>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table id="notificationsTable">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Followers</th>
+                                <th>Engagement</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="notificationsTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 2rem; color: #666;">
+                                    No users selected yet. Go to Attendees phase and select users to notify.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="loadingModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="loader"></div>
+            <h3 id="loadingText">Processing request...</h3>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
