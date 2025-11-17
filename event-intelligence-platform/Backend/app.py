@@ -11,6 +11,7 @@ from typing import List, Optional
 import uvicorn
 import re
 import time
+import os
 from engines.event_engine import SmartEventEngine
 from engines.attendee_engine import SmartAttendeeEngine
 from services.twitter_client import TwitterClient
@@ -523,7 +524,12 @@ def extract_tweet_id(post_link: str) -> Optional[str]:
         return None
 
 # --- Serve frontend without changing backend logic ---
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+# Handle frontend path for both local and Render deployment
+frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
+if not os.path.exists(frontend_path):
+    # Fallback: try relative path from Backend directory
+    frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
+app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
 
 if __name__ == "__main__":
     print("🚀 Event Intelligence Platform Starting...")
