@@ -70,23 +70,21 @@ async def health_check():
     return {
         "status": "healthy",
         "twitter_search_ready": twitter_client.is_operational(),
-        "twitter_actions_ready": twitter_client.api is not None,
+        "twitter_actions_ready": twitter_client.api_v1 is not None,
         "features": ["event_discovery", "attendee_discovery", "twitter_actions"]
     }
 
 @app.get("/api/auth-status")
 async def auth_status():
     """Check which authentication methods are working"""
-    from services.twitter_client import TwitterClient
-    
     twitter_client = TwitterClient()
     
     # Test OAuth 1.1
     oauth1_working = False
     oauth1_user = None
-    if twitter_client.api:
+    if twitter_client.api_v1:
         try:
-            user = twitter_client.api.verify_credentials()
+            user = twitter_client.api_v1.verify_credentials()
             oauth1_working = True
             oauth1_user = user.screen_name
         except Exception as e:
@@ -268,7 +266,6 @@ async def like_posts(request: TwitterActionRequest):
                 
                 print(f"   ❤️  Liking {username}'s tweet: {tweet_id}")
                 
-                # FIXED: Use client_v2.like_tweet
                 like_result = twitter_client.like_tweet(tweet_id)
                 
                 if like_result:
@@ -334,7 +331,6 @@ async def post_comments(request: TwitterActionRequest):
                     })
                     continue
                 
-                # Extract tweet ID from post link
                 tweet_id = extract_tweet_id(post_link)
                 if not tweet_id:
                     results.append({
@@ -344,13 +340,11 @@ async def post_comments(request: TwitterActionRequest):
                     })
                     continue
                 
-                # Create comment text
                 clean_username = username.replace('@', '')
                 comment_text = f"@{clean_username} {custom_message}"
                 
                 print(f"   💬 Commenting on {username}'s tweet: {tweet_id}")
                 
-                # FIXED: Use client_v2.post_tweet instead of client.api
                 result = twitter_client.post_tweet(comment_text, tweet_id)
                 
                 if result['success']:
@@ -372,7 +366,7 @@ async def post_comments(request: TwitterActionRequest):
                     })
                     print(f"   ❌ Comment failed for {username}: {result.get('error')}")
                 
-                time.sleep(3)  # Rate limiting
+                time.sleep(3)
                 
             except Exception as e:
                 results.append({
@@ -401,7 +395,7 @@ async def post_quote_tweets(request: TwitterActionRequest):
         
         twitter_client = TwitterClient()
         
-        if not twitter_client.api:
+        if not twitter_client.api_v1:
             return {
                 "success": False,
                 "error": "Twitter OAuth 1.1 not configured for quote tweets"
@@ -424,7 +418,6 @@ async def post_quote_tweets(request: TwitterActionRequest):
                     })
                     continue
                 
-                # Extract tweet ID from post link
                 tweet_id = extract_tweet_id(post_link)
                 if not tweet_id:
                     results.append({
@@ -434,17 +427,11 @@ async def post_quote_tweets(request: TwitterActionRequest):
                     })
                     continue
                 
-                # Create quote tweet text
-                clean_username = username.replace('@', '')
-                quote_text = f"{custom_message}\n\n🔁 Via @{clean_username}"
+                quote_text = f"{custom_message}\n\n🔁 Via @{username.replace('@','')}"
                 
-                # POST QUOTE TWEET USING OAUTH 1.1
                 print(f"   🔁 Creating quote tweet for {username}'s tweet: {tweet_id}")
                 
-                # For OAuth 1.1, we use retweet with comment (quote tweet)
-                tweet = twitter_client.api.update_status(
-                    status=quote_text
-                )
+                tweet = twitter_client.api_v1.update_status(status=quote_text)
                 
                 successful_quotes += 1
                 results.append({
@@ -457,7 +444,6 @@ async def post_quote_tweets(request: TwitterActionRequest):
                 })
                 print(f"   ✅ Quote tweet posted for {username}")
                 
-                # Add delay to avoid rate limits
                 time.sleep(3)
                     
             except Exception as e:
@@ -486,21 +472,18 @@ async def post_quote_tweets(request: TwitterActionRequest):
 async def test_single_comment():
     """Test endpoint for posting a single comment"""
     try:
-        from services.twitter_client import TwitterClient
-        
         twitter_client = TwitterClient()
         
-        if not twitter_client.api:
+        if not twitter_client.api_v1:
             return {"success": False, "error": "OAuth 1.1 not available"}
         
-        # Test with a known tweet ID
         test_tweet_id = "1879999999999999999"  # Replace with actual tweet ID
         test_username = "testuser"
         comment_text = f"@{test_username} 👋 Test comment from Event Intelligence Platform! 🎉"
         
         print(f"🧪 Testing comment on tweet: {test_tweet_id}")
         
-        tweet = twitter_client.api.update_status(
+        tweet = twitter_client.api_v1.update_status(
             status=comment_text,
             in_reply_to_status_id=test_tweet_id,
             auto_populate_reply_metadata=True
@@ -536,10 +519,11 @@ def extract_tweet_id(post_link: str) -> Optional[str]:
         
         return None
     except Exception:
+        
         return None
 
-# Serve frontend
-app.mount("/", StaticFiles(directory="../frontend", html=True), name="frontend")
+# --- Serve frontend without changing backend logic ---
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 if __name__ == "__main__":
     print("🚀 Event Intelligence Platform Starting...")

@@ -1,3 +1,4 @@
+//C:\Users\LENOVO\Desktop\Saviour\TRIAL2\frontend\js\app.js
 const API_BASE_URL = 'http://localhost:8000/api';
 
 let currentEvents = [];
